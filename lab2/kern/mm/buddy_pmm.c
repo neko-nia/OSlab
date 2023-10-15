@@ -77,7 +77,6 @@ show_buddy_array(void) {
  */
 static void
 buddy_init(void) {
-    // ³õÊŒ»¯ÁŽ±íÊý×éÖÐµÄÃ¿žöfree_listÍ·
     for (int i = 0; i < MAX_BUDDY_ORDER; i++) {
         list_init(buddy_array + i);
     }
@@ -86,9 +85,7 @@ buddy_init(void) {
     return;
 }
 
-/*
- *  »ñÈ¡ÒÔpageÒ³ÎªÍ·Ò³µÄ¿éµÄ»ï°é¿é
- */
+
 static struct Page*
 buddy_get_buddy(struct Page* page) {
     unsigned int order = page->property;
@@ -108,28 +105,25 @@ buddy_init_memmap(struct Page* base, size_t n) {
     assert(n > 0);
     size_t pnum;
     unsigned int order;
-    pnum = ROUNDDOWN2(n);       // œ«Ò³ÊýÏòÏÂÈ¡ÕûÎª2µÄÃÝ
-    //pnum = 8; // test!!!
-    order = getOrderOf2(pnum);   // Çó³öÒ³Êý¶ÔÓŠµÄ2µÄÃÝ
+    pnum = ROUNDDOWN2(n);   
+    order = getOrderOf2(pnum);   
     cprintf("[!]BS: AVA Page num after rounding down to powers of 2: %d = 2^%d\n", pnum, order);
     struct Page* p = base;
-    // ³õÊŒ»¯pagesÊý×éÖÐ·¶Î§ÄÚµÄÃ¿žöPage
     for (; p != base + pnum; p++) {
         assert(PageReserved(p));
         p->flags = 0;
-        p->property = -1;   // È«²¿³õÊŒ»¯Îª·ÇÍ·Ò³
+        p->property = -1;
         set_page_ref(p, 0);
     }
     max_order = order;
     nr_free = pnum;
-    list_add(&(buddy_array[max_order]), &(base->page_link)); // œ«µÚÒ»Ò³base²åÈëÊý×éµÄ×îºóÒ»žöÁŽ±í£¬×÷Îª³õÊŒ»¯µÄ×îŽó¿é¡ª¡ª16384,µÄÍ·Ò³
-    base->property = max_order;                       // œ«µÚÒ»Ò³baseµÄpropertyÉèÎª×îŽó¿éµÄ2ÃÝ
+    list_add(&(buddy_array[max_order]), &(base->page_link)); 
+    base->property = max_order;     
 
     return;
 }
 
 
-// Ä¬ÈÏ·ÖÁÑÊý×éÖÐµÚnÌõÁŽ±íµÄµÚÒ»¿é
 static void buddy_split(size_t n) {
     assert(n > 0 && n <= max_order);
     assert(!list_empty(&(buddy_array[n])));
@@ -163,31 +157,30 @@ buddy_alloc_pages(size_t n) {
     }
 
     struct Page* page = NULL;
-    size_t pnum = ROUNDUP2(n);  // ŽŠÀíËùÒª·ÖÅäµÄÒ³Êý£¬ÏòÉÏÈ¡ÕûÖÁ2µÄÃÝ
+    size_t pnum = ROUNDUP2(n); 
     size_t order = 0;
 
-    order = getOrderOf2(pnum);  // Çó³öËùÐèÒ³Êý¶ÔÓŠµÄÃÝpow
+    order = getOrderOf2(pnum); 
     cprintf("[!]BS: Allocating %d-->%d = 2^%d pages ...\n", n, pnum, order);
     cprintf("[!]BS: Buddy array before ALLOC:\n");
     show_buddy_array();
 find:
-    // Èôpow¶ÔÓŠµÄÁŽ±íÖÐº¬ÓÐ¿ÕÏÐ¿é£¬ÔòÖ±œÓ·ÖÅä
     if (!list_empty(&(buddy_array[order]))) {
         page = le2page(list_next(&(buddy_array[order])), page_link);
         list_del(list_next(&(buddy_array[order])));
-        ClearPageProperty(page); // œ«·ÖÅä¿éµÄÍ·Ò³ÉèÖÃÎªÒÑ±»ÕŒÓÃ
+        ClearPageProperty(page);
         cprintf("[!]BS: Buddy array after ALLOC NO.%d page:\n", page2ppn(page));
         show_buddy_array();
         goto done;
     }
     else {
         for (int i = order; i < max_order + 1; i++) {
-            // ÕÒµœpowºóµÚÒ»žö·Ç¿ÕÁŽ±í£¬·ÖÁÑ¿ÕÏÐ¿é
+           
             if (!list_empty(&(buddy_array[i]))) {
                 buddy_split(i);
                 cprintf("[!]BS: Buddy array after SPLITT:\n");
                 show_buddy_array();
-                goto find;      // ÖØÐÂŒì²éÏÖÔÚÊÇ·ñ¿ÉÒÔ·ÖÅä
+                goto find;      
             }
         }
     }
@@ -215,7 +208,7 @@ buddy_free_pages(struct Page* base, size_t n) {
     // µ±»ï°é¿é¿ÕÏÐ£¬ÇÒµ±Ç°¿é²»Îª×îŽó¿éÊ±
     while (PageProperty(buddy) && left_block->property < max_order) {
         cprintf("[!]BS: Buddy free, MERGING!\n");
-        if (left_block > buddy) { // Èôµ±Ç°×ó¿éÎªžüŽó¿éµÄÓÒ¿é
+        if (left_block > buddy) { 
             left_block->property = -1;
             SetPageProperty(left_block);
             tmp = left_block;
@@ -225,12 +218,12 @@ buddy_free_pages(struct Page* base, size_t n) {
         list_del(&(left_block->page_link));
         list_del(&(buddy->page_link));
         left_block->property += 1;
-        list_add(&(buddy_array[left_block->property]), &(left_block->page_link)); // Í·²åÈëÏàÓŠÁŽ±í
+        list_add(&(buddy_array[left_block->property]), &(left_block->page_link)); 
         show_buddy_array();
         buddy = buddy_get_buddy(left_block);
     }
     cprintf("[!]BS: Buddy array after FREE:\n");
-    SetPageProperty(left_block); // œ«»ØÊÕ¿éµÄÍ·Ò³ÉèÖÃÎª¿ÕÏÐ
+    SetPageProperty(left_block); 
     nr_free += pnum;
     show_buddy_array();
 
