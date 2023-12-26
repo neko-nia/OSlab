@@ -1,0 +1,3 @@
+D:/pr/riscv64-ucore-labcodes/riscv64-ucore-labcodes/lab8/out/build/x64-Debug/CMakeFiles/lab8.dir
+D:/pr/riscv64-ucore-labcodes/riscv64-ucore-labcodes/lab8/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+D:/pr/riscv64-ucore-labcodes/riscv64-ucore-labcodes/lab8/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
